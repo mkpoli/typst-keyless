@@ -4,6 +4,10 @@ Keyless is a Typst package for keying colors out of raster images and converting
 
 It provides a simple interface for common tasks such as removing a white background, cutting out a green screen, or making a scanned image blend cleanly into the page. Keyless is designed for reproducible documents: every threshold, softness value, color space, and output option can be written directly in Typst source.
 
+![Keyless green-screen removal demo](docs/keyless-demo.png)
+
+The demo image is rendered from `tests/visual-chan.typ`, using the same local package entrypoint and fixtures as the visual test suite.
+
 ## Usage
 
 For the local Tyler install:
@@ -46,6 +50,85 @@ Use `key-out-bytes` when you want the transformed PNG bytes instead of image con
 )
 
 #image(keyed, width: 80%)
+```
+
+## Examples
+
+Place a logo with a white background on a colored panel:
+
+```typst
+#import "@local/keyless:0.1.0": key-out
+
+#set page(fill: rgb("#20242a"))
+
+#let logo = read("logo.png", encoding: none)
+
+#box(
+  fill: rgb("#f5c542"),
+  inset: 12pt,
+  radius: 6pt,
+  key-out(
+    logo,
+    color: white,
+    tolerance: 8%,
+    softness: 2%,
+    width: 42mm,
+    alt: "Logo with transparent background",
+  ),
+)
+```
+
+Cut out a green-screen image and keep a soft edge around the subject:
+
+```typst
+#import "@local/keyless:0.1.0": key-out
+
+#let portrait = read("portrait.webp", encoding: none)
+
+#key-out(
+  portrait,
+  color: rgb("#00ff00"),
+  tolerance: 18%,
+  softness: 5%,
+  width: 70%,
+  alt: "Portrait with green screen removed",
+)
+```
+
+Make a scanned signature blend into the page while preserving dark ink:
+
+```typst
+#import "@local/keyless:0.1.0": key-out
+
+#let signature = read("signature.jpg", encoding: none)
+
+#align(right)[
+  #key-out(
+    signature,
+    color: white,
+    tolerance: 14%,
+    softness: 4%,
+    width: 35mm,
+    alt: "Handwritten signature",
+  )
+]
+```
+
+Generate keyed PNG bytes for reuse in metadata, export pipelines, or later image placement:
+
+```typst
+#import "@local/keyless:0.1.0": key-out-bytes
+
+#let source = read("badge.png", encoding: none)
+#let keyed = key-out-bytes(
+  source,
+  color: rgb("#ffffff"),
+  tolerance: 10%,
+  softness: 2%,
+)
+
+#metadata(range(keyed.len()).map(i => keyed.at(i))) <keyed-badge>
+#image(keyed, width: 30mm)
 ```
 
 ## API
